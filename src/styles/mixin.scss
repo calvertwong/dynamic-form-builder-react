@@ -1,0 +1,60 @@
+@use './colors.scss';
+
+// modifier
+@mixin disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+// input
+@mixin normalInput {
+  width: 100%;
+  display: block;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid colors.$light-grey;
+}
+
+@mixin inputError {
+  width: 100%;
+  display: block;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid colors.$error-red;
+}
+
+// text
+@mixin normalText {
+  font-size: 1rem;
+  color: colors.$black;
+}
+
+@mixin textError {
+  color: colors.$error-red;
+}
+
+// flexbox
+@mixin flexbox($justifyContent: center, $alignItems: center, $flexDirection: row) {
+  display: flex;
+  flex-direction: $flexDirection;
+  justify-content: $justifyContent;
+  align-items: $alignItems;
+}
+
+// cursor
+@mixin cursorText {
+  cursor: text;
+
+  &:disabled {
+    @include disabled;
+  }
+}
+
+@mixin cursorPointer {
+  cursor: pointer;
+
+  &:disabled {
+    @include disabled;
+  }
+}

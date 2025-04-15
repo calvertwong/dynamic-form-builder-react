@@ -1,0 +1,17 @@
+@use "../../../styles/mixin.scss";
+
+.dfP {
+  margin: 0;
+  @include mixin.normalText;
+
+  &__absolute {
+    position: absolute;
+  }
+
+  &__relative {
+    position: relative;
+  }
+
+  &__error {
+@include mixin.textError; }
+}

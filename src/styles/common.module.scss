@@ -1,0 +1,39 @@
+.wrapper {
+  display: flex;
+  
+  &__fullWidth {
+    width: 100%;
+  }
+
+  &__oneFifth {
+    width: 20%;
+  }
+
+  &__twoFifth {
+    width: 40%;
+  }
+
+  &__threeFifth {
+    width: 60%;
+  }
+
+  &__fourFifth {
+    width: 80%;
+  }
+}
+
+.item {
+  display: flex;
+  
+  &__flexOne {
+    flex: 1;
+  }
+
+  &__flexTwo {
+    flex: 2;
+  }
+
+  &__flexThree {
+    flex: 3;
+  }
+}

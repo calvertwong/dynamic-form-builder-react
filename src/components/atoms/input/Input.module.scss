@@ -1,0 +1,11 @@
+@use "../../../styles/mixin.scss";
+
+.dfInput {
+  @include mixin.normalInput;
+  @include mixin.normalText;
+  @include mixin.cursorText;
+  
+  &__error {
+    @include mixin.inputError;
+  }
+}

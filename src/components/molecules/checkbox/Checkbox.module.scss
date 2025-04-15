@@ -1,0 +1,17 @@
+@use "../../../styles/mixin.scss";
+
+.checkboxWrapper {
+  gap: 8px;
+  @include mixin.flexbox($justifyContent: start);
+
+  .checkboxInput {
+    width: 20px;
+    height: 20px;
+
+    @include mixin.cursorPointer;
+  }
+
+  .checkboxLabel {
+    @include mixin.cursorPointer;
+  }
+}
