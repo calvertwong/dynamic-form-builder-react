@@ -10,7 +10,7 @@ export const axiosInstance: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 120000,
 });
 
 // Request interceptor to add x-api-key except for login route
