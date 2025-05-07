@@ -1,4 +1,4 @@
-export type TP = {
+export type TParagraph = {
   className?: string;
   children?: React.ReactNode;
   hasError?: boolean;

@@ -1,15 +1,16 @@
-import { TInput } from "./Input.types";
+import { TInput } from './Input.types';
 import styles from './Input.module.scss';
-import classNames from "classnames";
+import classNames from 'classnames';
 
-export const Input = ({ className, hasError, ...props }: TInput) => {
+export const Input = (props: TInput) => {
+  const { className, hasError, ...rest } = props;
   const inputClasses = classNames(
     className,
     styles.dfInput,
     {
       [styles.dfInput__error]: hasError
     }
-  )
+  );
 
-  return <input className={inputClasses} {...props} />
-}
+  return <input className={inputClasses} {...rest} />;
+};

@@ -1,0 +1,17 @@
+@use '../../styles/common.module.scss';
+@use '../../styles/mixin.scss';
+
+.login {
+  &__container {
+    height: 100%;
+    @include mixin.flexbox($flexDirection: column, $alignItems: center);
+    @extend .wrapper;
+  }
+
+  &__contents {
+    border: 1.5px solid black;
+    border-radius: 5px;
+    padding: 3rem 5rem 3rem 5rem;
+    @extend .wrapper-size-4;
+  }
+}

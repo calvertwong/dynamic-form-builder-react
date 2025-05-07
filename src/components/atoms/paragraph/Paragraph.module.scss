@@ -1,6 +1,6 @@
 @use "../../../styles/mixin.scss";
 
-.dfP {
+.dfParagraph {
   margin: 0;
   @include mixin.normalText;
 
@@ -13,5 +13,6 @@
   }
 
   &__error {
-@include mixin.textError; }
+    @include mixin.textError;
+  }
 }

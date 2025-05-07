@@ -39,7 +39,6 @@ export default tseslint.config(
       'quotes': ['error', 'single'],
       'semi': ['error', 'always'],
       'camelcase': ['error', { properties: 'never' }],
-      "max-len": ["error", { "code": 120 }],
     },
   },
 )
