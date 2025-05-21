@@ -1,5 +1,5 @@
 import { AppContext } from "contexts/AppContext";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 import { TDependsOn, TField, TFinalJson } from "./Builder.types";
 import {
   ActionIcon,
@@ -9,9 +9,7 @@ import {
   Checkbox,
   Divider,
   Group,
-  NumberInput,
   Paper,
-  Radio,
   ScrollArea,
   Space,
   Stack,
@@ -38,9 +36,9 @@ const ZOOM_INTERVAL = 0.5;
 const MAX_ZOOM = 3;
 const MIN_ZOOM = 1;
 
-const fillArray = (numOfItems: number, value: string | Record<string, string> | TDependsOn,) => {
-  return new Array(numOfItems).fill(value);
-};
+// const fillArray = (numOfItems: number, value: string | Record<string, string> | TDependsOn,) => {
+//   return new Array(numOfItems).fill(value);
+// };
 
 export const Builder = () => {
   const { initialJson, setFinalJson, uploadedDbq, setCurrentRoute } = useContext(AppContext);
