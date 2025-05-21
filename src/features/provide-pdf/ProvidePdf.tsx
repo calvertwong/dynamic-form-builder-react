@@ -1,103 +1,248 @@
-import { FileInput } from '@molecules/fileInput/FileInput';
-import { NumberInput } from '@molecules/numberInput/NumberInput';
-import { TextInput } from '@molecules/textInput/TextInput';
-import { useContext, useState } from 'react';
-import styles from './ProvidePdf.module.scss';
-import { axiosInstance } from 'network/axiosInstance';
-import { AppContext } from 'contexts/AppContext';
+import { useContext, useState } from "react";
+import { axiosInstance } from "network/axiosInstance";
+import { AppContext } from "contexts/AppContext";
+import {
+  Button,
+  Center,
+  Code,
+  Container,
+  Flex,
+  Group,
+  LoadingOverlay,
+  NumberInput,
+  Paper,
+  ScrollArea,
+  Space,
+  Text,
+  Textarea,
+} from "@mantine/core";
+import { Dropzone, FileWithPath, PDF_MIME_TYPE } from "@mantine/dropzone";
+import { IconFileTypePdf, IconX } from "@tabler/icons-react";
 
 export const ProvidePdf = () => {
-  const [numOfQuestions, setNumOfQuestions] = useState<number | undefined>(undefined);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [numOfQuestions, setNumOfQuestions] = useState<number | string>("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [questionList, setQuestionList] = useState<string[]>([
+    // "Patient/Veteran's Social",
+    // "1A. DOES THE VETERAN HAVE ONE OR MORE SCARS ANYWHERE ON THE BODY, OR DISFIGUREMENT OF THE HEAD, FACE, OR NECK?",
+    // "1B. ARE ANY OF THE SCARS OF THE TRUNK OR EXTREMITIES PAINFUL?",
+    // "Are you completing this Disability Benefits Questionnaire",
+    // "Are you a VA Healthcare provider?",
+    // "Evidence reviewed:",
+    // "2. PHYSICAL EXAM FOR SCARS ON THE TRUNK AND EXTREMITIES",
+    // "A. SCARS WITHOUT UNDERLYING TISSUE DAMAGE",
+  ]);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
-  const { setFinalJson, setCurrentRoute } = useContext(AppContext);
+  const { setInitialJson, setCurrentRoute, setUploadedDbq } =
+    useContext(AppContext);
 
-  const numOfQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
+  const numOfQuestionsChange = (num: number | string) => {
+    setNumOfQuestions(num);
 
-    if (/^\d*$/.test(value)) {
-      setNumOfQuestions(Number(event.target.value));
+    if (num === 0) {
+      setQuestionList([]);
+      return;
     }
 
-    if (value === '') {
-      setNumOfQuestions(undefined);
+    if (typeof num !== "string" && !Number.isNaN(num)) {
+      if (questionList.length > num) {
+        const updatedList = [...questionList];
+        setQuestionList(updatedList.slice(0, num));
+        return;
+      }
+
+      setQuestionList([
+        ...questionList,
+        ...Array(num - questionList.length).fill(""),
+      ]);
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+  const handleFileChange = (files: FileWithPath[]) => {
     if (files && files.length > 0) {
-      setSelectedFile(files[0]);
+      setUploadedFile(files[0]);
     } else {
-      setSelectedFile(null);
+      setUploadedFile(null);
     }
   };
 
-  const collectQuestions = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
+  const collectQuestions = (questionText: string, position: number) => {
+    const updatedList = [...questionList];
+    updatedList[position] = questionText;
+    setQuestionList(updatedList);
+  };
 
-    const existedQuestion = selectedQuestions.some(item => item === value);
-
-    if (!existedQuestion) {
-      setSelectedQuestions([...selectedQuestions, value]);
-    }
+  const clearQuestionList = () => {
+    setQuestionList(Array(Number(numOfQuestions)).fill(""));
   };
 
   const submitPdf = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
+    setIsProcessing(true);
+
     const formData = new FormData();
-    if (selectedFile !== null && selectedQuestions.length > 0) {
-      formData.append('singlePdf', selectedFile);
-      formData.append('questions', JSON.stringify(selectedQuestions));
+    if (uploadedFile !== null && questionList.length > 0) {
+      formData.append("singlePdf", uploadedFile);
+      formData.append("questions", JSON.stringify(questionList));
 
       try {
-        const response = await axiosInstance.post('/parse-pdf', formData, {
+        const response = await axiosInstance.post("/parse-pdf", formData, {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         });
 
         if (response.status === 200) {
-          setFinalJson(response.data.finalJson);
-          setCurrentRoute('builder');
+          try {
+            const fileResponse = await axiosInstance.get("/download-pdf", {
+              params: { filename: response.data.downloadFileName },
+              responseType: "blob"
+            });
+
+            const fileBlob = new Blob([fileResponse.data], { type: "application/pdf" });
+            const fileUrl = URL.createObjectURL(fileBlob);
+
+            setUploadedDbq(fileUrl);
+            setInitialJson(response.data.finalJson);
+            setCurrentRoute("builder");
+            setIsProcessing(false);
+          } catch {
+            setIsProcessing(false);
+          }
         }
       } catch (error) {
         console.log(error);
+        setIsProcessing(false);
       }
     }
   };
 
-
   return (
-    <div className={styles['providePdf__container']}>
-      <div className={styles['providePdf__contents']}>
-        <FileInput onChange={handleFileChange} label='Upload file' />
+    <Center h={{ md: "100vh" }} w="100vw">
+      <Container size={"md"} w="100%">
+        <Paper shadow="xs" p="xl" withBorder radius={"md"}>
+          <LoadingOverlay
+            zIndex={1000}
+            visible={isProcessing}
+            overlayProps={{ radius: "sm", blur: 2 }}
+          />
 
-        <br />
+          <Flex mah={{ xs: "100%", md: "80vh" }} direction="column">
+            <Text size="lg" fw={700} ta={"left"}>
+              1. Upload a DBQ
+            </Text>
+            <Space h={"xs"} />
+            <Dropzone
+              onDrop={handleFileChange}
+              onReject={(files) => console.log("rejected files", files)}
+              maxSize={10 * 1024 ** 2}
+              accept={PDF_MIME_TYPE}
+            >
+              <Group
+                justify="center"
+                gap="xl"
+                mih={10}
+                style={{ pointerEvents: "none" }}
+              >
+                <Dropzone.Accept>
+                  <IconFileTypePdf
+                    size={52}
+                    color="var(--mantine-color-blue-6)"
+                    stroke={1.5}
+                  />
+                </Dropzone.Accept>
+                <Dropzone.Reject>
+                  <IconX
+                    size={52}
+                    color="var(--mantine-color-red-6)"
+                    stroke={1.5}
+                  />
+                </Dropzone.Reject>
+                <Dropzone.Idle>
+                  <IconFileTypePdf
+                    size={52}
+                    color="var(--mantine-color-dimmed)"
+                    stroke={1.5}
+                  />
+                </Dropzone.Idle>
 
-        <NumberInput onChange={numOfQuestionsChange} value={numOfQuestions} label='Enter number of questions' />
-      </div>
+                <div>
+                  <Text size="xl" inline>
+                    Drag DBQ PDF here or click to select file
+                  </Text>
+                  <Text size="sm" c="dimmed" inline mt={7}>
+                    Attach one file only, each file should not exceed 10mb
+                  </Text>
+                </div>
+              </Group>
+            </Dropzone>
+            {uploadedFile !== null && (
+              <Text>Uploaded DBQ: {uploadedFile.name}</Text>
+            )}
+            <Space h={"lg"} />
 
-      <div className={styles['providePdf__collectQuestionContainer']}>
-        {
-          Array.from({ length: numOfQuestions ?? 0 }).map((_, index: number) => (
-            <TextInput
-              key={`question_${index}`}
-              label={`Question ${index + 1}`}
-              value={selectedQuestions[index] || ''}
-              onChange={collectQuestions}
+            <Text size="lg" fw={700} ta={"left"}>
+              2. Enter the number of questions
+            </Text>
+            <NumberInput
+              allowNegative={false}
+              placeholder="Number of questions from the DBQ"
+              value={numOfQuestions}
+              onChange={numOfQuestionsChange}
             />
-          ))
-        }
-      </div>
+            <Space h={"lg"} />
 
-      <br />
+            {numOfQuestions !== "" && numOfQuestions !== 0 && (
+              <>
+                <Text size="lg" fw={700} ta={"left"}>
+                  3. Provide the partial question text eg:{" "}
+                  <Code fz={"md"}>Patient/Veteran's</Code>,{" "}
+                  <Code fz={"md"}>1A.</Code> or full question text for better
+                  accuracy (Order does not matter and will be re-ordered in the
+                  next screen)
+                </Text>
+                <ScrollArea style={{ overflow: "auto" }}>
+                  {Array.from({
+                    length: numOfQuestions === "" ? 0 : Number(numOfQuestions),
+                  }).map((_, index: number) => (
+                    <div key={`question_${index}`}>
+                      <Textarea
+                        placeholder="Enter partial or full question text"
+                        label={`Question ${index + 1}`}
+                        value={questionList[index] || ""}
+                        onChange={(event) =>
+                          collectQuestions(event.currentTarget.value, index)
+                        }
+                        minRows={1}
+                        autosize
+                      />
+                      <Space h={"md"} />
+                    </div>
+                  ))}
+                </ScrollArea>
 
-      <button type='button' onClick={submitPdf}>Submit</button>
+                <Center>
+                  <Group>
+                    <Button
+                      variant="filled"
+                      bg="red"
+                      onClick={clearQuestionList}
+                    >
+                      Clear question texts
+                    </Button>
 
-      <br />
-    </div>
+                    <Button variant="filled" onClick={submitPdf}>
+                      Build form
+                    </Button>
+                  </Group>
+                </Center>
+              </>
+            )}
+          </Flex>
+        </Paper>
+      </Container>
+    </Center>
   );
 };

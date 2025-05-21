@@ -1,10 +1,13 @@
-import { createContext } from 'react';
-import { AppContextType } from './AppContextType';
+import { createContext } from "react";
+import { AppContextType } from "./AppContextType";
 
-export const AppContext = createContext<AppContextType>(
-  {
-    currentRoute: 'login',
-    setCurrentRoute: () => null,
-    finalJson: [],
-    setFinalJson: () => null
-  });
+export const AppContext = createContext<AppContextType>({
+  currentRoute: "login",
+  setCurrentRoute: () => null,
+  finalJson: [],
+  setFinalJson: () => null,
+  initialJson: [],
+  setInitialJson: () => null,
+  uploadedDbq: null,
+  setUploadedDbq: () => null,
+});

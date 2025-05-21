@@ -1,44 +1,39 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
+import js from "@eslint/js";
+import globals from "globals";
+import reactRefresh from "eslint-plugin-react-refresh";
+import * as reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ["dist"] },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['**/*.{ts,tsx}'],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended, reactHooks.configs.recommended],
+    files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
     },
     plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
+      "react-refresh": reactRefresh,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
+      "react-hooks/react-compiler": "error",
+      "react-refresh/only-export-components": [
+        "warn",
         { allowConstantExport: true },
       ],
-      indent: [
-        'error',
-        2,
-        { SwitchCase: 1, flatTernaryExpressions: true },
-      ],
-      'prefer-const': [
-        'error',
+      indent: ["error", 2, { SwitchCase: 1, flatTernaryExpressions: true }],
+      "prefer-const": [
+        "error",
         {
-          destructuring: 'all',
+          destructuring: "all",
           ignoreReadBeforeAssign: false,
         },
       ],
-      'no-new-object': 'warn',
-      'quotes': ['error', 'single'],
-      'semi': ['error', 'always'],
-      'camelcase': ['error', { properties: 'never' }],
+      "no-new-object": "warn",
+      semi: ["error", "always"],
+      camelcase: ["error", { properties: "never" }],
+      "function-paren-newline": "off"
     },
   },
-)
+);

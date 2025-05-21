@@ -1,8 +1,9 @@
-import { Builder } from '@features/builder/Builder';
-import { Login } from '@features/login/Login';
-import { ProvidePdf } from '@features/provide-pdf/ProvidePdf';
-import { AppContext } from 'contexts/AppContext';
-import { useContext } from 'react';
+import { Builder } from "@features/builder/Builder";
+import { Login } from "@features/login/Login";
+import { ProvidePdf } from "@features/provide-pdf/ProvidePdf";
+import { TestPage } from "@features/testPage/TestPage";
+import { AppContext } from "contexts/AppContext";
+import { useContext } from "react";
 
 export const App = () => {
   const { currentRoute } = useContext(AppContext);
@@ -11,23 +12,25 @@ export const App = () => {
     let page = <></>;
 
     switch (currentRoute) {
-      case 'login':
+      case "login":
         page = <Login />;
         break;
 
-      case 'providePdf':
+      case "providePdf":
         page = <ProvidePdf />;
         break;
 
-      case 'builder':
-        page = <Builder/>;
+      case "builder":
+        page = <Builder />;
+        break;
+
+      case "testPage":
+        page = <TestPage />;
         break;
     }
 
     return page;
   };
 
-  return (
-    getPage()
-  );
+  return getPage();
 };

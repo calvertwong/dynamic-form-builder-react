@@ -1,53 +1,86 @@
-import { TextInput } from '@molecules//textInput/TextInput';
-import { useContext, useState } from 'react';
-import styles from './Login.module.scss';
-import { axiosInstance } from 'network/axiosInstance';
-import { AppContext } from 'contexts/AppContext';
+import { useContext, useEffect, useState } from "react";
+import { axiosInstance } from "network/axiosInstance";
+import { AppContext } from "contexts/AppContext";
+import {
+  Button,
+  Center,
+  Container,
+  Paper,
+  PasswordInput,
+  Space,
+  Text,
+  TextInput,
+} from "@mantine/core";
 
 export const Login = () => {
-  const [loginEmail, setLoginEmail] = useState<string>('');
-  const [loginPassword, setLoginPassword] = useState<string>('');
+  const [loginEmail, setLoginEmail] = useState<string>("");
+  const [loginPassword, setLoginPassword] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const { setCurrentRoute } = useContext(AppContext);
 
-  const loginInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-
-    if (name === 'loginEmail') {
-      setLoginEmail(value);
-    } else if (name === 'loginPassword') {
-      setLoginPassword(value);
+  useEffect(() => {
+    if (localStorage.getItem("isLoggedIn") === "true") {
+      setCurrentRoute("providePdf");
     }
-  };
+  }, []);
 
-  const loginUser = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  const loginUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const response = await axiosInstance.post('/login', {
-      email: loginEmail,
-      password: loginPassword
-    });
+    setIsProcessing(true);
 
-    if (response.status === 200) {
-      setCurrentRoute('providePdf');
+    try {
+      const response = await axiosInstance.post("/login", {
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (response.status === 200) {
+        setCurrentRoute("providePdf");
+        localStorage.setItem("isLoggedIn", "true");
+      }
+
+      setIsProcessing(false);
+    } catch {
+      setIsProcessing(false);
     }
   };
 
-  return <div className={styles['login__container']}>
-    <div className={styles['login__contents']}>
-      <h3 style={{ textAlign: 'center' }}>Exam Builder</h3>
+  return (
+    <Center h="100vh" w="100vw">
+      <Container size={"xs"} w="100%">
+        <Paper shadow="xs" p="xl" withBorder radius={"md"}>
+          <form onSubmit={loginUser}>
+            <Text ta="center" fw={700} size="xl">
+              Login
+            </Text>
+            <Space h="xl" />
 
-      <h4 style={{ textAlign: 'center' }}>Login</h4>
+            <TextInput
+              label="Email"
+              value={loginEmail}
+              onChange={(event) => setLoginEmail(event.target.value)}
+              withAsterisk
+              placeholder="Type your email here"
+            />
+            <Space h="xs" />
 
-      <TextInput label='Email' name='loginEmail' value={loginEmail} onChange={loginInputChange} />
+            <PasswordInput
+              label="Password"
+              value={loginPassword}
+              onChange={(event) => setLoginPassword(event.target.value)}
+              withAsterisk
+              placeholder="Type your password here"
+            />
+            <Space h="xl" />
 
-      <br />
-
-      <TextInput label='Password' name='loginPassword' value={loginPassword} onChange={loginInputChange} />
-
-      <br />
-
-      <button type='button' onClick={loginUser} style={{ width: '100%' }}>Login</button>
-    </div>
-  </div>;
+            <Button w="100%" type="submit" loading={isProcessing}>
+              Login
+            </Button>
+          </form>
+        </Paper>
+      </Container>
+    </Center>
+  );
 };

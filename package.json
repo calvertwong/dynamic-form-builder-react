@@ -12,11 +12,16 @@
     "sass-watch": "sass --watch"
   },
   "dependencies": {
+    "@mantine/core": "^8.0.0",
+    "@mantine/dates": "^8.0.0",
+    "@mantine/dropzone": "^8.0.0",
     "@react-pdf/renderer": "^4.3.0",
+    "@tabler/icons-react": "^3.31.0",
     "axios": "^1.9.0",
     "classnames": "^2.5.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-pdf": "^9.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
@@ -24,10 +29,14 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react-swc": "^3.8.0",
+    "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "^9.21.0",
-    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-hooks": "^6.0.0-rc.1",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "postcss": "^8.5.3",
+    "postcss-preset-mantine": "^1.17.0",
+    "postcss-simple-vars": "^7.0.1",
     "sass": "^1.86.3",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",

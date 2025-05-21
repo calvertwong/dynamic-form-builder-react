@@ -1,13 +1,19 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import './styles/index.scss';
-import { App } from './App.tsx';
-import { AppProvider } from 'contexts/AppProvider.tsx';
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+// import "./styles/index.scss";
+import { App } from "./App.tsx";
+import { AppProvider } from "contexts/AppProvider.tsx";
+import "@mantine/core/styles.css";
+import "@mantine/dropzone/styles.css";
 
-createRoot(document.getElementById('root')!).render(
+import { MantineProvider } from "@mantine/core";
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AppProvider>
-      <App />
+      <MantineProvider>
+        <App />
+      </MantineProvider>
     </AppProvider>
   </StrictMode>,
 );
