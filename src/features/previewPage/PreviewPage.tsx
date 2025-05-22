@@ -2,7 +2,7 @@ import { Box, Checkbox, Paper, Radio, Space, Stack, Text, TextInput } from "@man
 import { AppContext } from "contexts/AppContext";
 import { useContext } from "react";
 
-export const TestPage = () => {
+export const PreviewPage = () => {
   const { finalJson, } = useContext(AppContext);
 
   return <Stack>

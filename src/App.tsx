@@ -1,7 +1,7 @@
 import { Builder } from "@features/builder/Builder";
 import { Login } from "@features/login/Login";
 import { ProvidePdf } from "@features/provide-pdf/ProvidePdf";
-import { TestPage } from "@features/testPage/TestPage";
+import { PreviewPage } from "@features/previewPage/PreviewPage";
 import { AppContext } from "contexts/AppContext";
 import { useContext } from "react";
 
@@ -24,8 +24,8 @@ export const App = () => {
         page = <Builder />;
         break;
 
-      case "testPage":
-        page = <TestPage />;
+      case "previewPage":
+        page = <PreviewPage />;
         break;
     }
 

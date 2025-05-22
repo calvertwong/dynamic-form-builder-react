@@ -9,13 +9,13 @@ import {
   Checkbox,
   Divider,
   Group,
+  Menu,
   Paper,
   ScrollArea,
   Space,
   Stack,
   Text,
   Textarea,
-  TextInput,
   Title,
 } from "@mantine/core";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -24,8 +24,12 @@ import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import { useGetScreenDimens } from "hooks/useGetScreenDimens";
 import styles from "./Builder.module.scss";
-import { IconZoomIn, IconZoomOut } from "@tabler/icons-react";
+import { IconTrash, IconZoomIn, IconZoomOut } from "@tabler/icons-react";
 import { DisplayIf } from "components/organisms/displayIf/DisplayIf";
+import { EditableLabel } from "@molecules/editableLabel/EditableLabel";
+import { EditableTextOption } from "@molecules/editableTextOption/EditableTextOption";
+import { capitalize } from "utils/capitalize";
+import { EditableFieldName } from "@molecules/editableFieldName/EditableFieldName";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -44,6 +48,7 @@ export const Builder = () => {
   const { initialJson, setFinalJson, uploadedDbq, setCurrentRoute } = useContext(AppContext);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentQuestion] = useState<string | null>(null);
+  // const [clickedFieldName, setClickedFieldName] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   const [modifiedJson, setModifiedJson] = useState<TFinalJson[]>(initialJson)
@@ -71,6 +76,21 @@ export const Builder = () => {
   const onDocumentLoadSuccess = ({ numPages }: DocumentCallback) => {
     setNumPages(numPages);
   };
+
+  const onSearchClick = (fieldName: string, page: number) => {
+    if (pdfRef) {
+      const targetElement = document.querySelectorAll(`[name="${fieldName}"]`)
+
+      const currentBgColor = (targetElement as unknown as HTMLBaseElement[])[0].style.backgroundColor
+
+      if (currentBgColor === "orange") {
+        (targetElement as unknown as HTMLBaseElement[]).forEach(element => element.style.backgroundColor = "transparent")
+      } else if (currentBgColor === "transparent") {
+        (targetElement as unknown as HTMLBaseElement[]).forEach(element => element.style.backgroundColor = "orange")
+        pageRefs.current[page - 1]?.scrollIntoView({ behavior: "smooth" })
+      }
+    }
+  }
 
   const onFieldFocus = (fieldName: string, page: number) => {
     if (pdfRef) {
@@ -147,9 +167,13 @@ export const Builder = () => {
     setModifiedJson(newFinalJson);
   };
 
-  const goToTestPage = () => {
+  const deleteQuestion = (questionIndex: number) => {
+    setModifiedJson(modifiedJson.filter((_, index) => index !== questionIndex))
+  }
+
+  const goToPreviewPage = () => {
     setFinalJson(modifiedJson)
-    setCurrentRoute("testPage")
+    setCurrentRoute("previewPage")
   }
 
   return (
@@ -210,9 +234,40 @@ export const Builder = () => {
                   withBorder
                   radius={"md"}
                   mb="md"
+                  pos="relative"
                 >
+                  <ActionIcon
+                    color="red"
+                    variant="transparent"
+                    onClick={() => deleteQuestion(questionIndex)}
+                    aria-label="Delete question"
+                    right={15}
+                    pos="absolute"
+                    top={15}
+                    title="Delete question"
+                  >
+                    <IconTrash size={18} />
+                  </ActionIcon>
+
                   {/* Original question */}
-                  <Text>Original question:</Text>
+                  <Group justify="space-between">
+                    <Text>Original question:</Text>
+                    <Menu>
+                      {/* <MenuItem>Test</MenuItem> */}
+                      {/* {
+                          ["Display question", "Hint", "Dependee"].map((menuItem, menuDropdownIndex) => {
+                            return (<Menu.Item key={`question-${questionIndex}--${menuItem}`}>
+                              <Group>
+                                <Text>{menuItem}</Text>
+                                <DisplayIf<string | TDependsOn[]> rules={{ notNull: true }} variable={menuDropdownIndex === 0 ? questionItem.displayQuestion : menuDropdownIndex === 1 ? questionItem.hintOrDesc : questionItem.dependsOn}>
+                                  <IconCheck size={14} />
+                                </DisplayIf>
+                              </Group>
+                            </Menu.Item>)
+                          })
+                        } */}
+                    </Menu>
+                  </Group>
                   <Text fw={600}>{questionItem.question}</Text>
 
                   <Divider my="xs" />
@@ -355,16 +410,22 @@ export const Builder = () => {
                         key={`field-${fieldIndex}`}
                         className={styles.fieldContainerStyle}
                       >
-                        <Text>
-                          {field.label === questionItem.question
-                            ? ""
-                            : `Field label: ${field.label === "" ? "" : field.label}`}
-                        </Text>
+                        <EditableLabel shouldDisplay={field.label === questionItem.question} label="Label" text={field.displayLabel ?? field.label === "" ? "" : field.label} isEditing={false} />
 
-                        <Text>
-                          Type: {field.type}
-                        </Text>
+                        <Space h="5px" />
 
+                        <EditableTextOption label="Type" text={capitalize(field.type)} isEditing={false} />
+
+                        <Space h="5px" />
+
+                        <EditableFieldName
+                          label="Field name"
+                          text={field.fieldName}
+                          isEditing={false}
+                          onSearchClick={() => onSearchClick(field.fieldName, field.page)}
+                          onFocus={() => onFieldFocus(field.fieldName, field.page)}
+                          onBlur={() => onFieldBlur(field.fieldName)}
+                        />
                         {/* <TextInput
                           label="Actual label to display"
                           value={field.displayLabel ?? ""}
@@ -376,14 +437,6 @@ export const Builder = () => {
                           value={field.hintOrDesc ?? ""}
                           withAsterisk
                         /> */}
-
-                        <TextInput
-                          label="Field name"
-                          value={field.fieldName ?? ""}
-                          withAsterisk
-                          onFocus={() => onFieldFocus(field.fieldName, field.page)}
-                          onBlur={() => onFieldBlur(field.fieldName)}
-                        />
 
                         {/* <Radio.Group name="isFieldRequired" withAsterisk>
                           <Group>
@@ -459,8 +512,8 @@ export const Builder = () => {
         </ScrollArea>
 
         <Center>
-          <Button onClick={goToTestPage} pos="absolute" bottom={10}>
-            Submit
+          <Button onClick={goToPreviewPage} pos="absolute" bottom={10}>
+            Preview Form
           </Button>
         </Center>
       </Box>

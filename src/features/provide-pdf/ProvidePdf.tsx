@@ -23,14 +23,14 @@ export const ProvidePdf = () => {
   const [numOfQuestions, setNumOfQuestions] = useState<number | string>("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [questionList, setQuestionList] = useState<string[]>([
-    // "Patient/Veteran's Social",
-    // "1A. DOES THE VETERAN HAVE ONE OR MORE SCARS ANYWHERE ON THE BODY, OR DISFIGUREMENT OF THE HEAD, FACE, OR NECK?",
-    // "1B. ARE ANY OF THE SCARS OF THE TRUNK OR EXTREMITIES PAINFUL?",
-    // "Are you completing this Disability Benefits Questionnaire",
-    // "Are you a VA Healthcare provider?",
-    // "Evidence reviewed:",
-    // "2. PHYSICAL EXAM FOR SCARS ON THE TRUNK AND EXTREMITIES",
-    // "A. SCARS WITHOUT UNDERLYING TISSUE DAMAGE",
+    "Patient/Veteran's Social",
+    "1A. DOES THE VETERAN HAVE ONE OR MORE SCARS ANYWHERE ON THE BODY, OR DISFIGUREMENT OF THE HEAD, FACE, OR NECK?",
+    "1B. ARE ANY OF THE SCARS OF THE TRUNK OR EXTREMITIES PAINFUL?",
+    "Are you completing this Disability Benefits Questionnaire",
+    "Are you a VA Healthcare provider?",
+    "Evidence reviewed:",
+    "2. PHYSICAL EXAM FOR SCARS ON THE TRUNK AND EXTREMITIES",
+    "A. SCARS WITHOUT UNDERLYING TISSUE DAMAGE",
   ]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -169,18 +169,23 @@ export const ProvidePdf = () => {
                 </Dropzone.Idle>
 
                 <div>
-                  <Text size="xl" inline>
-                    Drag DBQ PDF here or click to select file
-                  </Text>
-                  <Text size="sm" c="dimmed" inline mt={7}>
-                    Attach one file only, each file should not exceed 10mb
-                  </Text>
+                  {uploadedFile !== null ?
+                    <Text ta="center" fw={500}>{uploadedFile.name}</Text>
+                    : <>
+                      <Text size="xl" inline>
+                        Drag DBQ PDF here or click to select file
+                      </Text>
+                      <Text size="sm" c="dimmed" inline mt={7}>
+                        Attach one file only, each file should not exceed 10mb
+                      </Text>
+                    </>
+                  }
                 </div>
               </Group>
             </Dropzone>
-            {uploadedFile !== null && (
-              <Text>Uploaded DBQ: {uploadedFile.name}</Text>
-            )}
+
+
+
             <Space h={"lg"} />
 
             <Text size="lg" fw={700} ta={"left"}>

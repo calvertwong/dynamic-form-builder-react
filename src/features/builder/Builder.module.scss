@@ -11,11 +11,12 @@
 
 .fieldContainerStyle {
   border: 1px solid lightgray;
-  border-bottom: 0;
+  border-radius: 6px;
   padding: 0.6rem 1rem;
   box-sizing: border-box;
+  margin-bottom: 10px;
 }
 
 .fieldContainerStyle:last-child {
-  border-bottom: 1px solid lightgray;
+  margin-bottom: 0;
 }
