@@ -23,14 +23,14 @@ export const ProvidePdf = () => {
   const [numOfQuestions, setNumOfQuestions] = useState<number | string>("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [questionList, setQuestionList] = useState<string[]>([
-    "Patient/Veteran's Social",
-    "1A. DOES THE VETERAN HAVE ONE OR MORE SCARS ANYWHERE ON THE BODY, OR DISFIGUREMENT OF THE HEAD, FACE, OR NECK?",
-    "1B. ARE ANY OF THE SCARS OF THE TRUNK OR EXTREMITIES PAINFUL?",
-    "Are you completing this Disability Benefits Questionnaire",
-    "Are you a VA Healthcare provider?",
-    "Evidence reviewed:",
-    "2. PHYSICAL EXAM FOR SCARS ON THE TRUNK AND EXTREMITIES",
-    "A. SCARS WITHOUT UNDERLYING TISSUE DAMAGE",
+    // "Patient/Veteran's Social",
+    // "1A. DOES THE VETERAN HAVE ONE OR MORE SCARS ANYWHERE ON THE BODY, OR DISFIGUREMENT OF THE HEAD, FACE, OR NECK?",
+    // "1B. ARE ANY OF THE SCARS OF THE TRUNK OR EXTREMITIES PAINFUL?",
+    // "Are you completing this Disability Benefits Questionnaire",
+    // "Are you a VA Healthcare provider?",
+    // "Evidence reviewed:",
+    // "2. PHYSICAL EXAM FOR SCARS ON THE TRUNK AND EXTREMITIES",
+    // "A. SCARS WITHOUT UNDERLYING TISSUE DAMAGE",
   ]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
