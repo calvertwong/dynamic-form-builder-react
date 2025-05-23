@@ -143,8 +143,9 @@ export const Builder = () => {
       setCurrentQuestions(currentQuestions.filter(item => item !== modifiedJson[questionIndex].question))
     }
 
+    const newJson = [...modifiedJson]
+
     if (type === "fieldLabel" && modifiedJson[questionIndex].fields[fieldIndex].displayLabel === modifiedJson[questionIndex].fields[fieldIndex].label) {
-      const newJson = [...modifiedJson]
 
       newJson[questionIndex].fields[fieldIndex] = {
         ...newJson[questionIndex].fields[fieldIndex],
@@ -152,6 +153,13 @@ export const Builder = () => {
       }
 
       setModifiedJson(newJson)
+    }
+
+    if (type === "question") {
+      newJson[questionIndex] = {
+        ...newJson[questionIndex],
+        displayQuestion: newJson[questionIndex].question === newJson[questionIndex].displayQuestion ? null : newJson[questionIndex].displayQuestion
+      }
     }
 
     setEditingItems(editingItems.filter(item => item.questionIndex !== questionIndex && item.fieldIndex !== fieldIndex && item.type !== type))
@@ -168,11 +176,13 @@ export const Builder = () => {
         ...newJson[questionIndex],
         displayQuestion: newJson[questionIndex].question === newValue as string ? null : newValue as string
       }
-    } else if (objectKey === "fieldName" && newJson[questionIndex].fields[fieldIndex].fieldName !== newValue) {
-      onFieldBlur(newJson[questionIndex].fields[fieldIndex].fieldName)
-      setClickedFieldNames(clickedFieldNames.filter(item => item !== newJson[questionIndex].fields[fieldIndex].fieldName).concat(newValue as string))
-      onFieldFocus(newValue as string)
     } else {
+      if (objectKey === "fieldName" && newJson[questionIndex].fields[fieldIndex].fieldName !== newValue) {
+        onFieldBlur(newJson[questionIndex].fields[fieldIndex].fieldName)
+        setClickedFieldNames(clickedFieldNames.filter(item => item !== newJson[questionIndex].fields[fieldIndex].fieldName).concat(newValue as string))
+        onFieldFocus(newValue as string)
+      }
+
       newJson[questionIndex].fields[fieldIndex] = {
         ...newJson[questionIndex].fields[fieldIndex],
         [objectKey]: newValue
@@ -233,7 +243,7 @@ export const Builder = () => {
   return (
     <Group>
       <Box h="100vh" w={screenWidth / 2.3} pt="md">
-        <ScrollArea className={styles["documentStyle"]}>
+        <ScrollArea className={styles["documentStyle"]} offsetScrollbars>
           <Document ref={pdfRef} file={uploadedDbq} onLoadSuccess={onDocumentLoadSuccess}>
             {numPages !== null &&
               numPages > 0 &&
