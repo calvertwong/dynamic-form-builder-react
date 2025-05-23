@@ -4,7 +4,7 @@ import { IconCheck, IconPencil } from "@tabler/icons-react"
 import { TEditableLabel } from "./EditableLabel.types"
 import { memo } from "react"
 
-const EditableLabelNotMemoized = ({ label, text, isEditing, shouldDisplay = true, ...props }: TEditableLabel) => {
+const EditableLabelNotMemoized = ({ label, text, isEditing, sameAsQuestion = true, onEditClick, onEditSaveClick, onItemChange, editMode, ...props }: TEditableLabel) => {
   return (
     <Group gap="xs" w="100%" align="flex-start">
       {/* 
@@ -34,11 +34,11 @@ const EditableLabelNotMemoized = ({ label, text, isEditing, shouldDisplay = true
                      └────────────────────────┘
           =======================================
       */}
-      <DisplayIf<boolean> rules={{ equalsTo: false }} variable={shouldDisplay}>
+      <DisplayIf<boolean> rules={{ equalsTo: false }} variable={sameAsQuestion}>
         <DisplayIf<boolean> rules={{ equalsTo: true }} variable={isEditing}>
           <Group gap="xs" flex={1}>
-            <Textarea minRows={1} autosize value={text} flex={1} {...props} />
-            <ActionIcon variant="transparent" color="green"><IconCheck /></ActionIcon>
+            <Textarea minRows={1} autosize value={text} flex={1} onChange={onItemChange} {...props} />
+            <ActionIcon variant="transparent" color="green" onClick={onEditSaveClick}><IconCheck /></ActionIcon>
           </Group>
         </DisplayIf>
       </DisplayIf>
@@ -58,11 +58,13 @@ const EditableLabelNotMemoized = ({ label, text, isEditing, shouldDisplay = true
           Label    : Some label value          🖉
           =======================================
       */}
-      <DisplayIf<boolean> rules={{ equalsTo: false }} variable={shouldDisplay}>
+      <DisplayIf<boolean> rules={{ equalsTo: false }} variable={sameAsQuestion}>
         <DisplayIf<boolean> rules={{ equalsTo: false }} variable={isEditing}>
           <Group gap="xs" flex={1}>
             <Text flex={1} lh={"normal"}>{text}</Text>
-            <ActionIcon variant="transparent" color="green" size="sm"><IconPencil /></ActionIcon>
+            <DisplayIf<boolean> rules={{ equalsTo: true }} variable={editMode}>
+              <ActionIcon variant="transparent" color="blue" size="sm" onClick={onEditClick}><IconPencil /></ActionIcon>
+            </DisplayIf>
           </Group>
         </DisplayIf>
       </DisplayIf>
@@ -75,7 +77,7 @@ const EditableLabelNotMemoized = ({ label, text, isEditing, shouldDisplay = true
 
           No edit icon
       */}
-      <DisplayIf<boolean> rules={{ equalsTo: true }} variable={shouldDisplay}>
+      <DisplayIf<boolean> rules={{ equalsTo: true }} variable={sameAsQuestion}>
         <Text>N/A</Text>
       </DisplayIf>
     </Group>

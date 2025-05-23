@@ -1,21 +1,17 @@
 import { AppContext } from "contexts/AppContext";
 import { useContext, useMemo, useRef, useState } from "react";
-import { TDependsOn, TField, TFinalJson } from "./Builder.types";
+import { TField, TFinalJson } from "./Builder.types";
 import {
   ActionIcon,
   Box,
   Button,
   Center,
-  Checkbox,
   Divider,
   Group,
-  Menu,
   Paper,
   ScrollArea,
   Space,
-  Stack,
   Text,
-  Textarea,
   Title,
 } from "@mantine/core";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -25,11 +21,12 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import { useGetScreenDimens } from "hooks/useGetScreenDimens";
 import styles from "./Builder.module.scss";
 import { IconTrash, IconZoomIn, IconZoomOut } from "@tabler/icons-react";
-import { DisplayIf } from "components/organisms/displayIf/DisplayIf";
 import { EditableLabel } from "@molecules/editableLabel/EditableLabel";
 import { EditableTextOption } from "@molecules/editableTextOption/EditableTextOption";
 import { capitalize } from "utils/capitalize";
 import { EditableFieldName } from "@molecules/editableFieldName/EditableFieldName";
+import { EditableQuestion } from "@molecules/editableQuestion/EditableQuestion";
+import { DisplayIf } from "components/organisms/displayIf/DisplayIf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -47,9 +44,11 @@ const MIN_ZOOM = 1;
 export const Builder = () => {
   const { initialJson, setFinalJson, uploadedDbq, setCurrentRoute } = useContext(AppContext);
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [currentQuestion] = useState<string | null>(null);
-  // const [clickedFieldName, setClickedFieldName] = useState<string | null>(null);
+  const [currentQuestions, setCurrentQuestions] = useState<string[]>([]);
+  const [clickedFieldNames, setClickedFieldNames] = useState<string[]>([]);
+  const [editingItems, setEditingItems] = useState<{ questionIndex: number, fieldIndex: number, type: string }[]>([]);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [editMode, setEditMode] = useState<boolean>(false)
 
   const [modifiedJson, setModifiedJson] = useState<TFinalJson[]>(initialJson)
 
@@ -77,7 +76,17 @@ export const Builder = () => {
     setNumPages(numPages);
   };
 
-  const onSearchClick = (fieldName: string, page: number) => {
+  const onQuestionSearchClick = (question: string) => {
+    if (pdfRef) {
+      if (currentQuestions.includes(question)) {
+        setCurrentQuestions(currentQuestions.filter(item => item !== question))
+      } else {
+        setCurrentQuestions([...currentQuestions, question])
+      }
+    }
+  }
+
+  const onFieldNameSearchClick = (fieldName: string, page: number) => {
     if (pdfRef) {
       const targetElement = document.querySelectorAll(`[name="${fieldName}"]`)
 
@@ -85,20 +94,28 @@ export const Builder = () => {
 
       if (currentBgColor === "orange") {
         (targetElement as unknown as HTMLBaseElement[]).forEach(element => element.style.backgroundColor = "transparent")
+
+        setClickedFieldNames(clickedFieldNames.filter(item => item !== fieldName))
+
       } else if (currentBgColor === "transparent") {
         (targetElement as unknown as HTMLBaseElement[]).forEach(element => element.style.backgroundColor = "orange")
         pageRefs.current[page - 1]?.scrollIntoView({ behavior: "smooth" })
+
+        setClickedFieldNames([...clickedFieldNames, fieldName])
       }
     }
   }
 
-  const onFieldFocus = (fieldName: string, page: number) => {
+  const onFieldFocus = (fieldName: string, page?: number) => {
     if (pdfRef) {
       const targetElement = document.querySelectorAll(`[name="${fieldName}"]`)
 
       if (targetElement) {
         (targetElement as unknown as HTMLBaseElement[]).forEach(element => element.style.backgroundColor = "orange")
-        pageRefs.current[page - 1]?.scrollIntoView({ behavior: "smooth" })
+
+        if (page) {
+          pageRefs.current[page - 1]?.scrollIntoView({ behavior: "smooth" })
+        }
       }
     }
   }
@@ -113,6 +130,57 @@ export const Builder = () => {
     }
   }
 
+  const onEditClick = (questionIndex: number, fieldIndex: number, type: string) => {
+    if (fieldIndex === -1) {
+      setCurrentQuestions([...currentQuestions, modifiedJson[questionIndex].question])
+    }
+    setEditingItems([...editingItems, { questionIndex, fieldIndex, type }])
+  }
+
+  const onEditSaveClick = (questionIndex: number, fieldIndex: number, type: string) => {
+    if (fieldIndex === -1) {
+      setCurrentQuestions(currentQuestions.filter(item => item !== modifiedJson[questionIndex].question))
+    }
+
+    if (type === "fieldLabel" && modifiedJson[questionIndex].fields[fieldIndex].displayLabel === modifiedJson[questionIndex].fields[fieldIndex].label) {
+      const newJson = [...modifiedJson]
+
+      newJson[questionIndex].fields[fieldIndex] = {
+        ...newJson[questionIndex].fields[fieldIndex],
+        displayLabel: null
+      }
+
+      setModifiedJson(newJson)
+    }
+
+    setEditingItems(editingItems.filter(item => item.questionIndex !== questionIndex && item.fieldIndex !== fieldIndex && item.type !== type))
+
+    setClickedFieldNames(clickedFieldNames.filter(item => item !== modifiedJson[questionIndex].fields[fieldIndex].fieldName))
+
+  }
+
+  const onItemChange = (questionIndex: number, fieldIndex: number, objectKey: string, newValue: string | number) => {
+    const newJson = [...modifiedJson]
+
+    if (objectKey === "displayQuestion") {
+      newJson[questionIndex] = {
+        ...newJson[questionIndex],
+        displayQuestion: newJson[questionIndex].question === newValue as string ? null : newValue as string
+      }
+    } else if (objectKey === "fieldName" && newJson[questionIndex].fields[fieldIndex].fieldName !== newValue) {
+      onFieldBlur(newJson[questionIndex].fields[fieldIndex].fieldName)
+      setClickedFieldNames(clickedFieldNames.filter(item => item !== newJson[questionIndex].fields[fieldIndex].fieldName).concat(newValue as string))
+      onFieldFocus(newValue as string)
+    } else {
+      newJson[questionIndex].fields[fieldIndex] = {
+        ...newJson[questionIndex].fields[fieldIndex],
+        [objectKey]: newValue
+      }
+    }
+
+    setModifiedJson(newJson)
+  }
+
   const customTextRenderer = useMemo(
     () =>
       ({
@@ -124,24 +192,9 @@ export const Builder = () => {
         itemIndex: number;
         pageNumber: number;
       }) => {
-        // // Highlight current selected field label in blue
-        // if (
-        //   currentPdfPage !== null &&
-        //   modifiedJson.find((item) =>
-        //     item.fields.find(
-        //       (fieldItem) =>
-        //         fieldItem.label === currentPdfPage &&
-        //         str === currentPdfPage,
-        //     ),
-        //   )
-        // ) {
-        //   return `<span style="background-color: blue; color: black">${str}</span>`;
-        // }
-
         // Highlight current selected question in orange
         if (
-          currentQuestion !== null &&
-          modifiedJson.find((item) => item.question === str)
+          currentQuestions.find((item) => item === str)
         ) {
           return `<span key=element-${itemIndex}-${pageNumber} id=element-${itemIndex}-${pageNumber} style="background-color: orange; color: black; cursor: pointer">${str}</span>`;
         }
@@ -153,19 +206,19 @@ export const Builder = () => {
 
         return `<span key=element-${itemIndex}-${pageNumber} id=element-${itemIndex}-${pageNumber} style="cursor: pointer">${str}</span>`;
       },
-    [currentQuestion, modifiedJson],
+    [currentQuestions, modifiedJson],
   );
 
-  const updateFinalJson = (questionIndex: number, fieldKey: string, fieldValue: string | TDependsOn[] | null,) => {
-    const newFinalJson = [...modifiedJson];
+  // const updateFinalJson = (questionIndex: number, fieldKey: string, fieldValue: string | TDependsOn[] | null,) => {
+  //   const newFinalJson = [...modifiedJson];
 
-    newFinalJson[questionIndex] = {
-      ...newFinalJson[questionIndex],
-      [fieldKey]: fieldValue,
-    };
+  //   newFinalJson[questionIndex] = {
+  //     ...newFinalJson[questionIndex],
+  //     [fieldKey]: fieldValue,
+  //   };
 
-    setModifiedJson(newFinalJson);
-  };
+  //   setModifiedJson(newFinalJson);
+  // };
 
   const deleteQuestion = (questionIndex: number) => {
     setModifiedJson(modifiedJson.filter((_, index) => index !== questionIndex))
@@ -187,7 +240,8 @@ export const Builder = () => {
                 <div
                   key={`page_${pageIndex}`}
                   ref={el => { pageRefs.current[pageIndex] = el }}
-                >                  <Page
+                >
+                  <Page
                     width={screenWidth / 2.3}
                     pageNumber={pageIndex + 1}
                     customTextRenderer={customTextRenderer}
@@ -236,173 +290,38 @@ export const Builder = () => {
                   mb="md"
                   pos="relative"
                 >
-                  <ActionIcon
-                    color="red"
-                    variant="transparent"
-                    onClick={() => deleteQuestion(questionIndex)}
-                    aria-label="Delete question"
-                    right={15}
-                    pos="absolute"
-                    top={15}
-                    title="Delete question"
-                  >
-                    <IconTrash size={18} />
-                  </ActionIcon>
+                  <DisplayIf<boolean> rules={{ equalsTo: true }} variable={editMode}>
+                    <ActionIcon
+                      color="red"
+                      variant="transparent"
+                      onClick={() => deleteQuestion(questionIndex)}
+                      aria-label="Delete question"
+                      right={15}
+                      pos="absolute"
+                      top={10}
+                      title="Delete question"
+                    >
+                      <IconTrash size={18} />
+                    </ActionIcon>
+                  </DisplayIf>
 
                   {/* Original question */}
-                  <Group justify="space-between">
-                    <Text>Original question:</Text>
-                    <Menu>
-                      {/* <MenuItem>Test</MenuItem> */}
-                      {/* {
-                          ["Display question", "Hint", "Dependee"].map((menuItem, menuDropdownIndex) => {
-                            return (<Menu.Item key={`question-${questionIndex}--${menuItem}`}>
-                              <Group>
-                                <Text>{menuItem}</Text>
-                                <DisplayIf<string | TDependsOn[]> rules={{ notNull: true }} variable={menuDropdownIndex === 0 ? questionItem.displayQuestion : menuDropdownIndex === 1 ? questionItem.hintOrDesc : questionItem.dependsOn}>
-                                  <IconCheck size={14} />
-                                </DisplayIf>
-                              </Group>
-                            </Menu.Item>)
-                          })
-                        } */}
-                    </Menu>
-                  </Group>
-                  <Text fw={600}>{questionItem.question}</Text>
+                  <EditableQuestion
+                    label={`Question ${questionIndex + 1}`}
+                    text={questionItem.displayQuestion ?? questionItem.question}
+                    isEditing={editingItems.find(item => item.questionIndex === questionIndex && item.fieldIndex === -1 && item.type === "question") !== undefined}
+                    onEditClick={() => onEditClick(questionIndex, -1, "question")}
+                    onEditSaveClick={() => onEditSaveClick(questionIndex, -1, "question")}
+                    onItemChange={(event) => onItemChange(questionIndex, -1, "displayQuestion", event.target.value as string)}
+                    onSearchClick={() => onQuestionSearchClick(questionItem.question)}
+                    searched={currentQuestions.includes(questionItem.question)}
+                    editMode={editMode}
+                  />
 
                   <Divider my="xs" />
 
-                  {/* Display question */}
-                  <Stack gap="xs">
-                    <Checkbox
-                      label="Show a different question text?"
-                      labelPosition="left"
-                      checked={questionItem.displayQuestion !== null}
-                      onChange={(event) =>
-                        updateFinalJson(
-                          questionIndex,
-                          "displayQuestion",
-                          event.target.checked ? "" : null,
-                        )
-                      }
-                    />
-                    <DisplayIf<string> rules={{ notNull: true }} variable={questionItem.displayQuestion}>
-                      <Textarea
-                        value={questionItem.displayQuestion ?? ""}
-                        placeholder="Question text that will be displayed to users"
-                        withAsterisk
-                        minRows={1}
-                        autosize
-                      />
-                    </DisplayIf>
-                  </Stack>
-
-                  <Space h="xs" />
-
-                  {/* Question hint or description */}
-                  {/* <Stack gap="xs">
-                    <Checkbox
-                      label="Question hint or description"
-                      labelPosition="left"
-                      checked={questionItem.hintOrDesc !== null}
-                      onChange={(event) =>
-                        updateFinalJson(
-                          questionIndex,
-                          "hintOrDesc",
-                          event.target.checked ? "" : null,
-                        )
-                      }
-                    />
-
-                    <DisplayIf<string> rules={{ notNull: true }} variable={questionItem.hintOrDesc}>
-                      <Textarea
-                        value={questionItem.hintOrDesc ?? ""}
-                        placeholder="Hint or description will be a smaller gray text below the question"
-                        withAsterisk
-                        minRows={1}
-                        autosize
-                      />
-                    </DisplayIf>
-                  </Stack> */}
-
-                  {/* <Space h="xs" /> */}
-
-                  {/* Question dependee(s) */}
-                  {/* <Stack gap="xs">
-                    <Checkbox
-                      label="Question dependee(s)?"
-                      labelPosition="left"
-                      checked={questionItem.dependsOn !== null}
-                      onChange={(event) =>
-                        updateFinalJson(
-                          questionIndex,
-                          "dependsOn",
-                          event.target.checked ? [] : null,
-                        )
-                      }
-                    />
-
-                    <DisplayIf<TDependsOn[]> rules={{ notNull: true }} variable={questionItem.dependsOn}>
-                      <NumberInput
-                        label="How many dependee(s)?"
-                        value={questionItem.dependsOn?.length}
-                        onChange={(value) =>
-                          updateFinalJson(
-                            questionIndex, "dependsOn", value && Number(value) > 0 ? fillArray(Number(value), { dependeeFieldName: "", } as TDependsOn) : []
-                          )
-                        }
-                      />
-                    </DisplayIf>
-
-                    <DisplayIf<TDependsOn[]> rules={{ notNull: true, notEmptyArray: true }} variable={questionItem.dependsOn}>
-                      <>
-                        <Text>Show when:</Text>
-                        {questionItem.dependsOn?.map(
-                          (dependsOnItem, dependsOnIndex) => (
-                            <Group
-                              key={`question_${questionIndex}_dependsOn_${dependsOnIndex}`}
-                            >
-                              <TextInput
-                                placeholder="Field name"
-                                value={dependsOnItem.dependeeFieldName ?? ""}
-                                w="100%"
-                              />
-
-                              <Group>
-                                <Radio label="text" />
-                                <Radio label="number" />
-                                <Radio label="boolean" />
-                              </Group>
-
-                              {dependsOnItem.type === "string" && (
-                                <TextInput
-                                  key={`question_${questionIndex}_dependsOn_${dependsOnIndex}`}
-                                  value={(dependsOnItem.value as string) ?? ""}
-                                />
-                              )}
-                              {dependsOnItem.type === "number" && (
-                                <NumberInput
-                                  key={`question_${questionIndex}_dependsOn_${dependsOnIndex}`}
-                                  value={(dependsOnItem.value as number) ?? ""}
-                                />
-                              )}
-                              {dependsOnItem.type === "boolean" && (
-                                <TextInput
-                                  key={`question_${questionIndex}_dependsOn_${dependsOnIndex}`}
-                                  value={(dependsOnItem.value as string) ?? ""}
-                                />
-                              )}
-                            </Group>
-                          ),
-                        )}
-                      </>
-                    </DisplayIf>
-                  </Stack> */}
-
-                  <Space h="md" />
-
                   {/* fields */}
-                  <Text>Fields:</Text>
+                  <Text fw={600}>Fields:</Text>
 
                   {questionItem.fields.map(
                     (field: TField, fieldIndex: number) => (
@@ -410,98 +329,44 @@ export const Builder = () => {
                         key={`field-${fieldIndex}`}
                         className={styles.fieldContainerStyle}
                       >
-                        <EditableLabel shouldDisplay={field.label === questionItem.question} label="Label" text={field.displayLabel ?? field.label === "" ? "" : field.label} isEditing={false} />
+                        <EditableLabel
+                          sameAsQuestion={field.label === questionItem.question}
+                          label="Label"
+                          text={field.displayLabel ?? field.label ?? "N/A"}
+                          isEditing={editingItems.find(item => item.questionIndex === questionIndex && item.fieldIndex === fieldIndex && item.type === "fieldLabel") !== undefined}
+                          onEditClick={() => onEditClick(questionIndex, fieldIndex, "fieldLabel")}
+                          onEditSaveClick={() => onEditSaveClick(questionIndex, fieldIndex, "fieldLabel")}
+                          onItemChange={(event) => onItemChange(questionIndex, fieldIndex, "displayLabel", event.target.value as string)}
+                          editMode={editMode}
+                        />
 
                         <Space h="5px" />
 
-                        <EditableTextOption label="Type" text={capitalize(field.type)} isEditing={false} />
+                        <EditableTextOption
+                          label="Type"
+                          text={capitalize(field.type)}
+                          isEditing={editingItems.find(item => item.questionIndex === questionIndex && item.fieldIndex === fieldIndex && item.type === "fieldType") !== undefined}
+                          onEditClick={() => onEditClick(questionIndex, fieldIndex, "fieldType")}
+                          onEditSaveClick={() => onEditSaveClick(questionIndex, fieldIndex, "fieldType")}
+                          onItemChange={(newValue) => onItemChange(questionIndex, fieldIndex, "type", newValue as string)}
+                          editMode={editMode}
+                        />
 
                         <Space h="5px" />
 
                         <EditableFieldName
                           label="Field name"
                           text={field.fieldName}
-                          isEditing={false}
-                          onSearchClick={() => onSearchClick(field.fieldName, field.page)}
+                          isEditing={editingItems.find(item => item.questionIndex === questionIndex && item.fieldIndex === fieldIndex && item.type === "fieldName") !== undefined}
+                          onEditClick={() => onEditClick(questionIndex, fieldIndex, "fieldName")}
+                          onEditSaveClick={() => onEditSaveClick(questionIndex, fieldIndex, "fieldName")}
+                          searched={clickedFieldNames.includes(field.fieldName)}
+                          onSearchClick={() => onFieldNameSearchClick(field.fieldName, field.page)}
                           onFocus={() => onFieldFocus(field.fieldName, field.page)}
                           onBlur={() => onFieldBlur(field.fieldName)}
+                          onItemChange={(event) => onItemChange(questionIndex, fieldIndex, "fieldName", event.target.value as string)}
+                          editMode={editMode}
                         />
-                        {/* <TextInput
-                          label="Actual label to display"
-                          value={field.displayLabel ?? ""}
-                          withAsterisk
-                        />
-
-                        <TextInput
-                          label="Hint or description"
-                          value={field.hintOrDesc ?? ""}
-                          withAsterisk
-                        /> */}
-
-                        {/* <Radio.Group name="isFieldRequired" withAsterisk>
-                          <Group>
-                            <Radio value="required" label="Required" />
-                            <Radio value="optional" label="Optional" />
-                          </Group>
-                        </Radio.Group> */}
-
-                        {/* <Radio.Group
-                          name="fieldType"
-                          label="Field type"
-                          withAsterisk
-                        >
-                          <Group>
-                            <Radio value="string" label="Text" />
-                            <Radio value="number" label="Number" />
-                            <Radio value="checkbox" label="Checkbox" />
-                            <Radio value="date" label="Date" />
-                          </Group>
-                        </Radio.Group> */}
-
-                        {/* {field.dependsOn && (
-                          <>
-                            <Text>Show when:</Text>
-                            {field.dependsOn.map(
-                              (dependsOnItem, dependsOnIndex) => (
-                                <Group
-                                  key={`field_${fieldIndex}_dependsOn_${dependsOnIndex}`}
-                                >
-                                  <TextInput
-                                    label="Dependee field name"
-                                    value={
-                                      dependsOnItem.dependeeFieldName ?? ""
-                                    }
-                                  />
-
-                                  <Group>
-                                    <Radio label="text" />
-                                    <Radio label="number" />
-                                    <Radio label="boolean" />
-                                  </Group>
-
-                                  {dependsOnItem.type === "string" && (
-                                    <TextInput
-                                      key={`question_${questionIndex}_dependsOn_${dependsOnIndex}`}
-                                      value={(dependsOnItem.value as string) ?? ""}
-                                    />
-                                  )}
-                                  {dependsOnItem.type === "number" && (
-                                    <NumberInput
-                                      key={`question_${questionIndex}_dependsOn_${dependsOnIndex}`}
-                                      value={(dependsOnItem.value as number) ?? ""}
-                                    />
-                                  )}
-                                  {dependsOnItem.type === "boolean" && (
-                                    <TextInput
-                                      key={`question_${questionIndex}_dependsOn_${dependsOnIndex}`}
-                                      value={(dependsOnItem.value as string) ?? ""}
-                                    />
-                                  )}
-                                </Group>
-                              )
-                            )}
-                          </>
-                        )} */}
                       </div>
                     ),
                   )}
@@ -512,9 +377,14 @@ export const Builder = () => {
         </ScrollArea>
 
         <Center>
-          <Button onClick={goToPreviewPage} pos="absolute" bottom={10}>
-            Preview Form
-          </Button>
+          <Group pos="absolute" bottom={10}>
+            <Button color={editMode ? "blue" : "purple"} onClick={() => setEditMode(!editMode)}>
+              {editMode ? "Done editing" : "Start editing"}
+            </Button>
+            <Button color="darkGreen" disabled={editMode} onClick={goToPreviewPage}>
+              Preview Form
+            </Button>
+          </Group>
         </Center>
       </Box>
     </Group>

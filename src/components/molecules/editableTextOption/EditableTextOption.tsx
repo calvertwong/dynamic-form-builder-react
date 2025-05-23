@@ -10,7 +10,7 @@ const typeOptions = [
   { value: "textbox", label: "Textbox", },
 ]
 
-const EditableTextOptionNotMemoized = ({ label, text, isEditing }: TEditableLabelOption) => {
+const EditableTextOptionNotMemoized = ({ label, text, isEditing, onEditClick, onEditSaveClick, onItemChange, editMode }: TEditableLabelOption) => {
   return (
     <Group gap="xs" w="100%" align="flex-start">
       {/* 
@@ -39,8 +39,8 @@ const EditableTextOptionNotMemoized = ({ label, text, isEditing }: TEditableLabe
       */}
       <DisplayIf<boolean> rules={{ equalsTo: true }} variable={isEditing}>
         <Group gap="xs" flex={1} justify="space-between">
-          <Select size="sm" value={text.toLowerCase()} data={typeOptions} />
-          <ActionIcon variant="transparent" color="green"><IconCheck /></ActionIcon>
+          <Select size="sm" value={text.toLowerCase()} data={typeOptions} onChange={onItemChange} />
+          <ActionIcon variant="transparent" color="green" onClick={onEditSaveClick}><IconCheck /></ActionIcon>
         </Group>
       </DisplayIf>
 
@@ -62,7 +62,9 @@ const EditableTextOptionNotMemoized = ({ label, text, isEditing }: TEditableLabe
       <DisplayIf<boolean> rules={{ equalsTo: false }} variable={isEditing}>
         <Group gap="xs" flex={1}>
           <Text flex={1} lh={"normal"}>{text}</Text>
-          <ActionIcon variant="transparent" color="green" size="sm"><IconPencil /></ActionIcon>
+          <DisplayIf<boolean> rules={{ equalsTo: true }} variable={editMode}>
+            <ActionIcon variant="transparent" color="blue" size="sm" onClick={onEditClick}><IconPencil /></ActionIcon>
+          </DisplayIf>
         </Group>
       </DisplayIf>
     </Group>

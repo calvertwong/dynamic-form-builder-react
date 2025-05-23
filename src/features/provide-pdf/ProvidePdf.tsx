@@ -13,11 +13,14 @@ import {
   Paper,
   ScrollArea,
   Space,
+  Stack,
   Text,
   Textarea,
+  Title,
 } from "@mantine/core";
 import { Dropzone, FileWithPath, PDF_MIME_TYPE } from "@mantine/dropzone";
 import { IconFileTypePdf, IconX } from "@tabler/icons-react";
+import { DisplayIf } from "components/organisms/displayIf/DisplayIf";
 
 export const ProvidePdf = () => {
   const [numOfQuestions, setNumOfQuestions] = useState<number | string>("");
@@ -31,6 +34,8 @@ export const ProvidePdf = () => {
     // "Evidence reviewed:",
     // "2. PHYSICAL EXAM FOR SCARS ON THE TRUNK AND EXTREMITIES",
     // "A. SCARS WITHOUT UNDERLYING TISSUE DAMAGE",
+    // "Are any of the scars unstable upon inspection? If yes, check all that apply:",
+    // "Are any of the scars tender to palpation? If yes, check all that apply:",
   ]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -38,9 +43,9 @@ export const ProvidePdf = () => {
     useContext(AppContext);
 
   const numOfQuestionsChange = (num: number | string) => {
-    setNumOfQuestions(num);
+    setNumOfQuestions(num === "" ? "" : num as number);
 
-    if (num === 0) {
+    if (num === 0 || num === "") {
       setQuestionList([]);
       return;
     }
@@ -120,86 +125,101 @@ export const ProvidePdf = () => {
   };
 
   return (
-    <Center h={{ md: "100vh" }} w="100vw">
-      <Container size={"md"} w="100%">
-        <Paper shadow="xs" p="xl" withBorder radius={"md"}>
-          <LoadingOverlay
-            zIndex={1000}
-            visible={isProcessing}
-            overlayProps={{ radius: "sm", blur: 2 }}
-          />
+    <Stack h={{ md: "100vh" }} w="100vw">
+      <LoadingOverlay
+        zIndex={1000}
+        visible={isProcessing}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
 
-          <Flex mah={{ xs: "100%", md: "80vh" }} direction="column">
-            <Text size="lg" fw={700} ta={"left"}>
-              1. Upload a DBQ
-            </Text>
-            <Space h={"xs"} />
-            <Dropzone
-              onDrop={handleFileChange}
-              onReject={(files) => console.log("rejected files", files)}
-              maxSize={10 * 1024 ** 2}
-              accept={PDF_MIME_TYPE}
-            >
-              <Group
-                justify="center"
-                gap="xl"
-                mih={10}
-                style={{ pointerEvents: "none" }}
+      <Space h="lg" />
+      <Title order={2} ta="center">Follow instructions below</Title>
+
+      <Stack w="100%" h="90%" justify="space-between">
+        <Container size={"md"} w="100%" style={{ display: "flex", flexDirection: "column", minHeight: 0}}>
+          <Paper shadow="xs" p="xl" withBorder radius={"md"}>
+            <Flex mah={{ xs: "100%", md: "80vh" }} direction="column">
+              <Text size="lg" fw={700} ta={"left"}>
+                1. Upload a DBQ
+              </Text>
+              <Space h={"xs"} />
+              <Dropzone
+                onDrop={handleFileChange}
+                onReject={(files) => console.log("rejected files", files)}
+                maxSize={10 * 1024 ** 2}
+                accept={PDF_MIME_TYPE}
               >
-                <Dropzone.Accept>
-                  <IconFileTypePdf
-                    size={52}
-                    color="var(--mantine-color-blue-6)"
-                    stroke={1.5}
-                  />
-                </Dropzone.Accept>
-                <Dropzone.Reject>
-                  <IconX
-                    size={52}
-                    color="var(--mantine-color-red-6)"
-                    stroke={1.5}
-                  />
-                </Dropzone.Reject>
-                <Dropzone.Idle>
-                  <IconFileTypePdf
-                    size={52}
-                    color="var(--mantine-color-dimmed)"
-                    stroke={1.5}
-                  />
-                </Dropzone.Idle>
+                <Group
+                  justify="center"
+                  gap="xl"
+                  mih={10}
+                  style={{ pointerEvents: "none" }}
+                >
+                  <Dropzone.Accept>
+                    <IconFileTypePdf
+                      size={52}
+                      color="var(--mantine-color-blue-6)"
+                      stroke={1.5}
+                    />
+                  </Dropzone.Accept>
+                  <Dropzone.Reject>
+                    <IconX
+                      size={52}
+                      color="var(--mantine-color-red-6)"
+                      stroke={1.5}
+                    />
+                  </Dropzone.Reject>
+                  <Dropzone.Idle>
+                    <IconFileTypePdf
+                      size={52}
+                      color="var(--mantine-color-dimmed)"
+                      stroke={1.5}
+                    />
+                  </Dropzone.Idle>
 
-                <div>
-                  {uploadedFile !== null ?
-                    <Text ta="center" fw={500}>{uploadedFile.name}</Text>
-                    : <>
-                      <Text size="xl" inline>
-                        Drag DBQ PDF here or click to select file
-                      </Text>
-                      <Text size="sm" c="dimmed" inline mt={7}>
-                        Attach one file only, each file should not exceed 10mb
-                      </Text>
-                    </>
-                  }
-                </div>
-              </Group>
-            </Dropzone>
+                  <div>
+                    {uploadedFile !== null ?
+                      <Text ta="center" fw={500}>{uploadedFile.name}</Text>
+                      : <>
+                        <Text size="xl" inline>
+                          Drag DBQ PDF here or click to select file
+                        </Text>
+                        <Text size="sm" c="dimmed" inline mt={7}>
+                          Attach one file only, each file should not exceed 10mb
+                        </Text>
+                      </>
+                    }
+                  </div>
+                </Group>
+              </Dropzone>
+            </Flex>
+          </Paper>
 
+          <Space h={"lg"} />
 
+          <DisplayIf<File> rules={{ notNull: true }} variable={uploadedFile}>
+            <Paper shadow="xs" p="xl" withBorder radius={"md"}>
+              <Text size="lg" fw={700} ta={"left"}>
+                2. Enter the number of questions
+              </Text>
+              <NumberInput
+                allowNegative={false}
+                allowDecimal={false}
+                hideControls
+                placeholder="Number of questions from the DBQ"
+                value={numOfQuestions}
+                onChange={numOfQuestionsChange}
+                min={1}
+                max={40}
+                description="min: 1, max: 40"
+              />
+            </Paper>
+          </DisplayIf>
 
-            <Space h={"lg"} />
+          <Space h={"lg"} />
 
-            <Text size="lg" fw={700} ta={"left"}>
-              2. Enter the number of questions
-            </Text>
-            <NumberInput
-              allowNegative={false}
-              placeholder="Number of questions from the DBQ"
-              value={numOfQuestions}
-              onChange={numOfQuestionsChange}
-            />
-            <Space h={"lg"} />
-
-            {numOfQuestions !== "" && numOfQuestions !== 0 && (
+          <DisplayIf<number | string> rules={{ moreThan: 0, notEmptyString: true }} variable={numOfQuestions}>
+            <Paper shadow="xs" p="xl" withBorder radius={"md"} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
               <>
                 <Text size="lg" fw={700} ta={"left"}>
                   3. Provide the partial question text eg:{" "}
@@ -208,9 +228,9 @@ export const ProvidePdf = () => {
                   accuracy (Order does not matter and will be re-ordered in the
                   next screen)
                 </Text>
-                <ScrollArea style={{ overflow: "auto" }}>
+                <ScrollArea style={{ overflow: "auto", flex: 1, minHeight: 0 }} offsetScrollbars>
                   {Array.from({
-                    length: numOfQuestions === "" ? 0 : Number(numOfQuestions),
+                    length: numOfQuestions as number,
                   }).map((_, index: number) => (
                     <div key={`question_${index}`}>
                       <Textarea
@@ -222,32 +242,35 @@ export const ProvidePdf = () => {
                         }
                         minRows={1}
                         autosize
+                        required
                       />
                       <Space h={"md"} />
                     </div>
                   ))}
                 </ScrollArea>
 
-                <Center>
-                  <Group>
-                    <Button
-                      variant="filled"
-                      bg="red"
-                      onClick={clearQuestionList}
-                    >
-                      Clear question texts
-                    </Button>
+                <Space h="md" />
 
-                    <Button variant="filled" onClick={submitPdf}>
-                      Build form
-                    </Button>
-                  </Group>
-                </Center>
+                <Group justify="flex-end">
+                  <Button
+                    variant="filled"
+                    bg="red"
+                    onClick={clearQuestionList}
+                  >
+                    Clear all
+                  </Button>
+                </Group>
               </>
-            )}
-          </Flex>
-        </Paper>
-      </Container>
-    </Center>
+            </Paper>
+          </DisplayIf>
+        </Container>
+
+        <Container size="md" w="100%">
+          <Button variant="filled" w="100%" disabled={questionList.includes("") || questionList.length === 0} onClick={submitPdf}>
+            Next step
+          </Button>
+        </Container>
+      </Stack >
+    </Stack>
   );
 };

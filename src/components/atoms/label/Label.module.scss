@@ -1,9 +1,0 @@
-@use "../../../styles/mixin.scss";
-
-.dfLabel {
-  @include mixin.normalText;
-
-  &__error {
-    @include mixin.textError;
-  }
-}

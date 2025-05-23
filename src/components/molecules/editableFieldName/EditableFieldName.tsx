@@ -5,7 +5,7 @@ import { TEditableFieldName } from "./EditableFieldName.types"
 import { memo } from "react"
 import styles from "./EditableFieldName.module.scss"
 
-const EditableFieldNameNotMemoized = ({ label, text, isEditing, onSearchClick, ...props }: TEditableFieldName) => {
+const EditableFieldNameNotMemoized = ({ label, text, isEditing, onSearchClick, searched, onEditClick, onEditSaveClick, onItemChange, editMode, ...props }: TEditableFieldName) => {
   return (
     <Group gap="xs" w="100%" align="flex-start">
       {/* 
@@ -37,10 +37,10 @@ const EditableFieldNameNotMemoized = ({ label, text, isEditing, onSearchClick, .
       */}
       <DisplayIf<boolean> rules={{ equalsTo: true }} variable={isEditing}>
         <Group gap="xs" flex={1}>
-          <Textarea minRows={1} autosize value={text} flex={1} {...props} />
-          <ActionIcon variant="transparent" color="green"><IconCheck /></ActionIcon>
+          <Textarea minRows={1} autosize value={text} flex={1} onChange={onItemChange} {...props} />
+          <ActionIcon variant="transparent" color="green" onClick={onEditSaveClick}><IconCheck /></ActionIcon>
         </Group>
-      </DisplayIf>
+      </DisplayIf >
 
       {/* 
           Field Label
@@ -60,12 +60,14 @@ const EditableFieldNameNotMemoized = ({ label, text, isEditing, onSearchClick, .
       <DisplayIf<boolean> rules={{ equalsTo: false }} variable={isEditing}>
         <Group gap="xs" flex={1}>
           <Text className={styles.breakWord} lh={"normal"} lineClamp={2} flex={1} {...props}>{text}</Text>
-          <ActionIcon variant="transparent" color="blue" size="sm" title="Field location" onClick={onSearchClick}><IconSearch /></ActionIcon>
-          <ActionIcon variant="transparent" color="green" size="sm"><IconPencil /></ActionIcon>
+          <ActionIcon variant={searched ? "filled" : "transparent"} color="blue" size="sm" title="Field location" onClick={onSearchClick}><IconSearch /></ActionIcon>
+          <DisplayIf<boolean> rules={{ equalsTo: true }} variable={editMode}>
+            <ActionIcon variant="transparent" color="blue" size="sm" onClick={onEditClick}><IconPencil /></ActionIcon>
+          </DisplayIf>
         </Group>
-      </DisplayIf>
+      </DisplayIf >
 
-    </Group>
+    </Group >
   )
 }
 

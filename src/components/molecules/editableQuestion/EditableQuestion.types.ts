@@ -1,10 +1,10 @@
-export type TEditableFieldName = {
+export type TEditableQuestion = {
   label: string;
   text: string;
   isEditing: boolean;
-  onFocus?: () => void;
   searched?: boolean;
   onSearchClick?: () => void;
+  onFocus?: () => void;
   onBlur?: () => void;
   onEditClick: () => void;
   onEditSaveClick: () => void;

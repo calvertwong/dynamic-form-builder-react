@@ -50,6 +50,7 @@ export type TDisplayIfConditions<T> =
   T extends number[] ? TNumberArrayConditions :
   T extends boolean ? TBooleanConditions :
   T extends TDependsOn[] ? TObjectArrayConditions :
+  T extends File ? TObjectArrayConditions :
   never;
 
 export type TDisplayIfProps<T> = {
