@@ -80,9 +80,9 @@ export const Builder = () => {
     if (pdfRef) {
       if (currentQuestions.includes(question)) {
         setCurrentQuestions(currentQuestions.filter(item => item !== question))
-        pageRefs.current[page - 1]?.scrollIntoView({ behavior: "smooth" })
       } else {
         setCurrentQuestions([...currentQuestions, question])
+        pageRefs.current[page - 1]?.scrollIntoView({ behavior: "smooth" })
       }
     }
   }
