@@ -1,4 +1,4 @@
-import { Box, Button, Center, Checkbox, Container, Group, Paper, Radio, ScrollArea, Space, Stack, Text, TextInput } from "@mantine/core";
+import { Button, Center, Checkbox, Container, Group, Paper, Radio, ScrollArea, Space, Stack, Text, TextInput } from "@mantine/core";
 import { SignPad } from "@molecules/signPad/SignPad";
 import { AppContext } from "contexts/AppContext";
 import { useContext } from "react";
