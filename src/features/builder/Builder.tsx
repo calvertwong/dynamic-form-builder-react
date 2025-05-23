@@ -76,10 +76,11 @@ export const Builder = () => {
     setNumPages(numPages);
   };
 
-  const onQuestionSearchClick = (question: string) => {
+  const onQuestionSearchClick = (question: string, page: number) => {
     if (pdfRef) {
       if (currentQuestions.includes(question)) {
         setCurrentQuestions(currentQuestions.filter(item => item !== question))
+        pageRefs.current[page - 1]?.scrollIntoView({ behavior: "smooth" })
       } else {
         setCurrentQuestions([...currentQuestions, question])
       }
@@ -313,7 +314,7 @@ export const Builder = () => {
                     onEditClick={() => onEditClick(questionIndex, -1, "question")}
                     onEditSaveClick={() => onEditSaveClick(questionIndex, -1, "question")}
                     onItemChange={(event) => onItemChange(questionIndex, -1, "displayQuestion", event.target.value as string)}
-                    onSearchClick={() => onQuestionSearchClick(questionItem.question)}
+                    onSearchClick={() => onQuestionSearchClick(questionItem.question, questionItem.page)}
                     searched={currentQuestions.includes(questionItem.question)}
                     editMode={editMode}
                   />
